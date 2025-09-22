@@ -34,32 +34,33 @@ app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
 
 // Allowed origins
 const allowedOrigins = [
-  "http://localhost:5173", // local frontend
-  (process.env.FRONTEND_URL || "").replace(/\/$/, ""), // production frontend
+  "http://localhost:5173",
+  (process.env.FRONTEND_URL || "").replace(/\/$/, "")
 ];
 
-// CORS configuration
 app.use(cors({
   origin: function (origin, callback) {
+    // allow requests with no origin (e.g., Postman)
     if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.warn("❌ Blocked by CORS:", origin);
-      callback(new Error("Not allowed by CORS"));
+      return callback(null, true);
     }
+    console.warn("Blocked by CORS:", origin);
+    callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-// Handle preflight OPTIONS requests
+// Handle preflight
 app.options("*", cors({
   origin: allowedOrigins,
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+// Handle preflight OPTIONS requests
 
 // Connect to MongoDB
 const connectDB = async () => {
