@@ -6,7 +6,9 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-import connectDB from "./config/db.js";
+import mongoose from "mongoose";
+
+// Import middlewares
 import { notFound, errorHandler } from "./middlewares/error.middleware.js";
 
 // Import routes
@@ -17,58 +19,64 @@ import adminRoutes from "./routes/admin.routes.js";
 import buyerRoutes from "./routes/buyer.routes.js";
 import paymentRoutes from "./routes/payment.routes.js";
 
-// Connect to MongoDB
-connectDB();
-
 const app = express();
-
-// Allowed origins for CORS
-const allowedOrigins = [
-  (process.env.FRONTEND_URL || "").replace(/\/$/, ""), // Production frontend
-  "http://localhost:5173", // Local frontend
-];
-
-// Enable CORS
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like Postman)
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.warn("❌ Blocked by CORS:", origin);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
-
-// Handle preflight OPTIONS requests
-app.options(
-  "*",
-  cors({
-    origin: allowedOrigins,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
-
-// Body parsers
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // Get __dirname in ES module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Body parsers
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // Serve uploads folder
 app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
 
-// Mount routers
+// Allowed origins
+const allowedOrigins = [
+  "http://localhost:5173", // local frontend
+  (process.env.FRONTEND_URL || "").replace(/\/$/, ""), // production frontend
+];
+
+// CORS configuration
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn("❌ Blocked by CORS:", origin);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+// Handle preflight OPTIONS requests
+app.options("*", cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+// Connect to MongoDB
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    console.log("✅ MongoDB connected");
+  } catch (err) {
+    console.error("❌ MongoDB connection failed:", err);
+    process.exit(1); // Exit if DB connection fails
+  }
+};
+connectDB();
+
+// Mount routes
 app.use("/api/auth", authRoutes);
 app.use("/api/properties", propertyRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
@@ -82,6 +90,4 @@ app.use(errorHandler);
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () =>
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
-);
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
