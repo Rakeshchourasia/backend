@@ -22,8 +22,9 @@ connectDB();
 
 const app = express();
 
-const allowedOrigins = [ // your frontend
-  "http://localhost:5173",  
+const allowedOrigins = [
+  (process.env.FRONTEND_URL || "").replace(/\/$/, ""),
+  "http://localhost:5173",
 ];
 
 app.use(
