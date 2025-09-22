@@ -24,7 +24,7 @@ const app = express();
 
 const allowedOrigins = [
 "https://land-portal-1.onrender.com", // your frontend
-  "http://localhost:3000",  
+  "http://localhost:5173",  
 ];
 
 app.use(
