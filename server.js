@@ -35,6 +35,9 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
+    // --- THIS IS THE DEBUGGING LINE ---
+    console.log(`Request from origin: ${origin}`); 
+
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -59,8 +62,9 @@ app.use(errorHandler);
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
+  // These options are deprecated but won't cause harm
+  // useNewUrlParser: true,
+  // useUnifiedTopology: true,
 })
 .then(() => console.log("✅ MongoDB connected"))
 .catch(err => {
