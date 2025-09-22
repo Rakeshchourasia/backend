@@ -16,6 +16,9 @@ import { notFound, errorHandler } from "./middlewares/error.middleware.js";
 
 dotenv.config();
 
+// --- ADDED LINE 1: Verify .env is loaded ---
+console.log(`✅ FRONTEND_URL loaded: ${process.env.FRONTEND_URL}`);
+
 const app = express();
 
 // Body parser
@@ -33,11 +36,9 @@ const allowedOrigins = [
   "http://localhost:5173"
 ];
 
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
-    // --- THIS IS THE DEBUGGING LINE ---
     console.log(`Request from origin: ${origin}`); 
-
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -46,7 +47,12 @@ app.use(cors({
     }
   },
   credentials: true,
-}));
+};
+
+// --- ADDED LINE 2: Explicitly handle preflight requests ---
+app.options('*', cors(corsOptions)); // This will intercept all OPTIONS requests
+
+app.use(cors(corsOptions)); // Keep your original CORS middleware for other requests
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -61,11 +67,7 @@ app.use(notFound);
 app.use(errorHandler);
 
 // MongoDB connection
-mongoose.connect(process.env.MONGO_URI, {
-  // These options are deprecated but won't cause harm
-  // useNewUrlParser: true,
-  // useUnifiedTopology: true,
-})
+mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log("✅ MongoDB connected"))
 .catch(err => {
   console.error("❌ MongoDB connection failed:", err);
@@ -74,3 +76,4 @@ mongoose.connect(process.env.MONGO_URI, {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
