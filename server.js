@@ -23,24 +23,33 @@ connectDB();
 const app = express();
 
 const allowedOrigins = [
-  (process.env.FRONTEND_URL || "").replace(/\/$/, ""),
-  "http://localhost:5173",
+  (process.env.FRONTEND_URL || "").replace(/\/$/, ""), // production frontend
+  "http://localhost:5173", // local dev frontend
 ];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-    methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-    allowedHeaders: ['Content-Type','Authorization'],
-  })
-);
+app.use(cors({
+  origin: function (origin, callback) {
+    // allow requests with no origin like Postman or mobile apps
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn("❌ Blocked by CORS:", origin);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
+}));
+
+// Handle preflight OPTIONS requests explicitly
+app.options('*', cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
+}));
+
 // Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
