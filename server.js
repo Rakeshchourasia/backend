@@ -16,10 +16,14 @@ import { notFound, errorHandler } from "./middlewares/error.middleware.js";
 
 dotenv.config();
 
-// --- ADDED LINE 1: Verify .env is loaded ---
 console.log(`✅ FRONTEND_URL loaded: ${process.env.FRONTEND_URL}`);
 
 const app = express();
+
+// ✅ Simplified CORS setup - THIS MUST BE THE FIRST MIDDLEWARE
+// This tells the server to allow requests from ANY origin.
+// We are using this as a diagnostic step.
+app.use(cors());
 
 // Body parser
 app.use(express.json());
@@ -29,30 +33,6 @@ app.use(express.urlencoded({ extended: true }));
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
-
-// ✅ CORS setup
-const allowedOrigins = [
-  process.env.FRONTEND_URL?.replace(/\/$/, ""), // from .env
-  "http://localhost:5173"
-];
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    console.log(`Request from origin: ${origin}`); 
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.warn("Blocked by CORS:", origin);
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-};
-
-// --- ADDED LINE 2: Explicitly handle preflight requests ---
-app.options('*', cors(corsOptions)); // This will intercept all OPTIONS requests
-
-app.use(cors(corsOptions)); // Keep your original CORS middleware for other requests
 
 // Routes
 app.use("/api/auth", authRoutes);
