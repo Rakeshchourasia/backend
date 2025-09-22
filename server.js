@@ -29,20 +29,22 @@ const __dirname = path.dirname(__filename);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploads folder
-app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
+// Serve uploads folder as static
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Allowed origins
+// Allowed origins for CORS
 const allowedOrigins = [
-  (process.env.FRONTEND_URL || "").replace(/\/$/, ""),
+  (process.env.FRONTEND_URL || "").replace(/\/$/, ""), // remove trailing slash
   "http://localhost:5173"
 ];
 
+// CORS middleware
 app.use(cors({
   origin: function(origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.warn("❌ Blocked by CORS:", origin);
       callback(new Error("Not allowed by CORS"));
     }
   },
@@ -51,16 +53,13 @@ app.use(cors({
   allowedHeaders: ["Content-Type","Authorization"]
 }));
 
-// Preflight
+// Preflight requests
 app.options("*", cors({
   origin: allowedOrigins,
   credentials: true,
   methods: ["GET","POST","PUT","DELETE","OPTIONS"],
   allowedHeaders: ["Content-Type","Authorization"]
 }));
-
-// Handle preflig
-// Handle preflight OPTIONS requests
 
 // Connect to MongoDB
 const connectDB = async () => {
@@ -72,7 +71,7 @@ const connectDB = async () => {
     console.log("✅ MongoDB connected");
   } catch (err) {
     console.error("❌ MongoDB connection failed:", err);
-    process.exit(1); // Exit if DB connection fails
+    process.exit(1);
   }
 };
 connectDB();
