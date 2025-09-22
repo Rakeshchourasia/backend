@@ -1,4 +1,4 @@
-// Load environment variables
+// server.js
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -29,12 +29,12 @@ const __dirname = path.dirname(__filename);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploads folder as static
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Serve uploads folder
+app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
 
-// Allowed origins for CORS
+// Allowed origins
 const allowedOrigins = [
-  (process.env.FRONTEND_URL || "").replace(/\/$/, ""), // remove trailing slash
+  (process.env.FRONTEND_URL || "").replace(/\/$/, ""),
   "http://localhost:5173"
 ];
 
@@ -44,7 +44,7 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.warn("❌ Blocked by CORS:", origin);
+      console.warn("Blocked by CORS:", origin);
       callback(new Error("Not allowed by CORS"));
     }
   },
@@ -53,7 +53,7 @@ app.use(cors({
   allowedHeaders: ["Content-Type","Authorization"]
 }));
 
-// Preflight requests
+// Handle preflight OPTIONS requests for all routes
 app.options("*", cors({
   origin: allowedOrigins,
   credentials: true,
